@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 
 const CreateDoctor = () => {
+  const [doctorId, setDoctorId] = useState(""); // New state for DoctorID
   const [name, setName] = useState("");
   const [specialization, setSpecialization] = useState("");
   const [contact, setContact] = useState("");
@@ -19,7 +20,7 @@ const CreateDoctor = () => {
       const response = await fetch("http://localhost:8000/doctors/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, specialization, contact, email }),
+        body: JSON.stringify({ DoctorId: doctorId, name, specialization, contact, email }), // Include DoctorID in the request
       });
 
       if (!response.ok) {
@@ -28,8 +29,9 @@ const CreateDoctor = () => {
 
       await response.json();
       setSuccess(true);
-      
+
       // Reset form
+      setDoctorId(""); // Reset DoctorID
       setName("");
       setSpecialization("");
       setContact("");
@@ -61,6 +63,22 @@ const CreateDoctor = () => {
       )}
       
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* DoctorID Input */}
+        <div>
+          <label htmlFor="doctorId" className="block text-sm font-medium text-gray-700 mb-1">
+            Doctor ID
+          </label>
+          <input
+            id="doctorId"
+            type="text"
+            placeholder="Enter Doctor ID"
+            value={doctorId}
+            onChange={(e) => setDoctorId(e.target.value)}
+            required
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
             Doctor Name

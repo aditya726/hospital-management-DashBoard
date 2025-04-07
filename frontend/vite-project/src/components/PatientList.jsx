@@ -63,6 +63,7 @@ const PatientList = () => {
               <div className="ml-4">
                 <p className="text-lg font-medium text-gray-900">{patient.name}</p>
                 <p className="text-sm text-gray-500">{patient.age} years old</p>
+                <p className="text-sm text-gray-500">Patient ID: {patient.PatientId}</p> {/* Display patient ID */}
               </div>
             </li>
           ))}

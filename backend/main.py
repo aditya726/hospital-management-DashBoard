@@ -83,6 +83,7 @@ class PyObjectId(str):
 
 # Base Models with Pydantic v2 compatibility
 class PatientBase(BaseModel):
+    PatientId : str
     name: str
     age: int
     gender: str
@@ -161,6 +162,7 @@ class PatientHistory(PatientHistoryBase):
     id: Annotated[str, Field(alias="_id", default=None)]
 
 class DoctorBase(BaseModel):
+    DoctorId: str
     name: str
     specialization: str
     contact: str
@@ -180,8 +182,8 @@ class Doctor(DoctorBase):
     id: Annotated[str, Field(alias="_id", default=None)]
 
 class AppointmentBase(BaseModel):
-    patient_id: str
-    doctor_id: str
+    PatientId: str
+    DoctorId: str
     date: datetime
     status: str = "scheduled"  # scheduled, completed, cancelled
     notes: Optional[str] = None
@@ -203,10 +205,14 @@ class Appointment(AppointmentBase):
 async def create_patient(patient: PatientCreate):
     patient_dict = patient.model_dump()
     patient_dict["admission_date"] = datetime.now()
-    new_patient = await db.patients.insert_one(patient_dict)
-    created_patient = await db.patients.find_one({"_id": new_patient.inserted_id})
-    created_patient["_id"] = str(created_patient["_id"])
-    return created_patient
+    check = await db.patients.find_one({"PatientId": patient.PatientId})
+    if check:
+        raise HTTPException(status_code=400, detail="patient already exists")
+    else:
+        new_patient = await db.patients.insert_one(patient_dict)
+        created_patient = await db.patients.find_one({"_id": new_patient.inserted_id})
+        created_patient["_id"] = str(created_patient["_id"])
+        return created_patient
 
 @app.get("/patients/", response_model=List[Patient])
 async def get_patients():
@@ -382,6 +388,9 @@ async def add_medical_record(patient_id: str, medical_record: MedicalRecord):
 # Doctor endpoints
 @app.post("/doctors/", response_model=Doctor, status_code=status.HTTP_201_CREATED)
 async def create_doctor(doctor: DoctorCreate):
+    check = await db.doctors.find_one({"DoctorId": doctor.DoctorId})
+    if check:
+        raise HTTPException(status_code=400, detail = "Doctor already added")
     new_doctor = await db.doctors.insert_one(doctor.model_dump())
     created_doctor = await db.doctors.find_one({"_id": new_doctor.inserted_id})
     created_doctor["_id"] = str(created_doctor["_id"])
@@ -440,17 +449,11 @@ async def delete_doctor(doctor_id: str):
 @app.post("/appointments/", response_model=Appointment, status_code=status.HTTP_201_CREATED)
 async def create_appointment(appointment: AppointmentCreate):
     # Validate patient and doctor existence
-    if not ObjectId.is_valid(appointment.patient_id):
-        raise HTTPException(status_code=400, detail="Invalid patient ID format")
-    
-    if not ObjectId.is_valid(appointment.doctor_id):
-        raise HTTPException(status_code=400, detail="Invalid doctor ID format")
-    
-    patient = await db.patients.find_one({"_id": ObjectId(appointment.patient_id)})
+    patient = await db.patients.find_one({"PatientId": appointment.PatientId})
     if patient is None:
         raise HTTPException(status_code=404, detail="Patient not found")
     
-    doctor = await db.doctors.find_one({"_id": ObjectId(appointment.doctor_id)})
+    doctor = await db.doctors.find_one({"DoctorId": appointment.DoctorId})
     if doctor is None:
         raise HTTPException(status_code=404, detail="Doctor not found")
     

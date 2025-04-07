@@ -44,7 +44,15 @@ const App = () => {
               <h1 className="text-2xl font-bold text-gray-800">Hospital Management System</h1>
             </div>
             <div>
-              <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium shadow-sm">Admin Portal</button>
+              <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium shadow-sm mr-4">
+                Admin Portal
+              </button>
+              <button className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-md text-sm font-medium shadow-sm mr-4">
+                Login
+              </button>
+              <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium shadow-sm">
+                Signup
+              </button>
             </div>
           </div>
         </div>
