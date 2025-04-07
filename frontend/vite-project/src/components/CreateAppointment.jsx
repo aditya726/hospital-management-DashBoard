@@ -8,37 +8,57 @@ const CreateAppointment = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+  const [errorDetails, setErrorDetails] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setErrorDetails(null);
     setSuccess(false);
 
-    // Ensure date format is correct with milliseconds and UTC (Z)
-    const formattedDate = new Date(date).toISOString();  // This will return the date in the correct format: "2025-04-06T17:34:15.837Z"
+    // Ensure IDs are valid MongoDB ObjectId format (24 hex characters)
+    const objectIdPattern = /^[0-9a-fA-F]{24}$/;
+    if (!objectIdPattern.test(patientId)) {
+      setError("Invalid Patient ID format. Must be a valid MongoDB ObjectId (24 hex characters)");
+      setLoading(false);
+      return;
+    }
 
-    console.log({
-      patient_id: patientId, 
-      doctor_id: doctorId, 
-      date: formattedDate,  // Log the formatted date to ensure it's correct
-      status 
-    });
+    if (!objectIdPattern.test(doctorId)) {
+      setError("Invalid Doctor ID format. Must be a valid MongoDB ObjectId (24 hex characters)");
+      setLoading(false);
+      return;
+    }
+
+    // Format the date properly - ISO 8601 format
+    const formattedDate = new Date(date).toISOString();
+
+    const appointmentData = {
+      patient_id: patientId,
+      doctor_id: doctorId,
+      date: formattedDate,
+      status
+    };
+
+    console.log("Sending appointment data:", appointmentData);
 
     try {
       const response = await fetch("http://localhost:8000/appointments/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          patient_id: patientId, 
-          doctor_id: doctorId, 
-          date: formattedDate, // Ensure it's ISO string format
-          status 
-        }),
+        body: JSON.stringify(appointmentData),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to create appointment");
+        // Try to get detailed error info from response
+        try {
+          const errorData = await response.json();
+          setErrorDetails(errorData.detail || JSON.stringify(errorData));
+          throw new Error(`Failed to create appointment: ${errorData.detail || "Unknown error"}`);
+        } catch (parseError) {
+          throw new Error(`Failed to create appointment: Status ${response.status}`);
+        }
       }
 
       await response.json();
@@ -56,7 +76,6 @@ const CreateAppointment = () => {
     }
   };
 
-
   return (
     <div className="max-w-2xl mx-auto p-6 bg-white shadow-md rounded-lg">
       <h2 className="text-2xl font-semibold text-gray-800 mb-6">Create New Appointment</h2>
@@ -72,7 +91,14 @@ const CreateAppointment = () => {
       
       {error && (
         <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-          {error}
+          <p className="font-medium">Error:</p>
+          <p>{error}</p>
+          {errorDetails && (
+            <div className="mt-2 text-sm">
+              <p className="font-medium">Details:</p>
+              <p>{errorDetails}</p>
+            </div>
+          )}
         </div>
       )}
       
@@ -84,12 +110,15 @@ const CreateAppointment = () => {
           <input
             id="patientId"
             type="text"
-            placeholder="Enter patient ID"
+            placeholder="Enter patient ID (24 character hex)"
             value={patientId}
             onChange={(e) => setPatientId(e.target.value)}
             required
             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
+          <p className="mt-1 text-xs text-gray-500">
+            Must be a valid MongoDB ObjectId (24 hex characters)
+          </p>
         </div>
         
         <div>
@@ -99,12 +128,15 @@ const CreateAppointment = () => {
           <input
             id="doctorId"
             type="text"
-            placeholder="Enter doctor ID"
+            placeholder="Enter doctor ID (24 character hex)"
             value={doctorId}
             onChange={(e) => setDoctorId(e.target.value)}
             required
             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
+          <p className="mt-1 text-xs text-gray-500">
+            Must be a valid MongoDB ObjectId (24 hex characters)
+          </p>
         </div>
         
         <div>

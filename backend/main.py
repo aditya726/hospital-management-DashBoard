@@ -19,7 +19,7 @@ app = FastAPI(title="Hospital Management System API")
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, replace with specific origins
+    allow_origins=["http://localhost:5173"],  # In production, replace with specific origins
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -454,14 +454,7 @@ async def create_appointment(appointment: AppointmentCreate):
     if doctor is None:
         raise HTTPException(status_code=404, detail="Doctor not found")
     
-    # Convert the string date to a datetime object
-    try:
-        appointment_date = datetime.fromisoformat(appointment.date)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid date format")
-    
     appointment_dict = appointment.model_dump()
-    appointment_dict['date'] = appointment_date  # Assign the parsed datetime
     new_appointment = await db.appointments.insert_one(appointment_dict)
     created_appointment = await db.appointments.find_one({"_id": new_appointment.inserted_id})
     created_appointment["_id"] = str(created_appointment["_id"])
