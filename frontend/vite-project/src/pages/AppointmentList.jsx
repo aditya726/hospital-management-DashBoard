@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
-
+import { useNavigate } from "react-router-dom";
 const AppointmentList = () => {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -14,6 +15,7 @@ const AppointmentList = () => {
           throw new Error('Failed to fetch appointments');
         }
         const data = await response.json();
+        console.log(data);
         setAppointments(data);
       } catch (err) {
         setError(err.message);
@@ -60,8 +62,8 @@ const AppointmentList = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {appointments.map((appointment) => (
                 <tr key={appointment._id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{appointment.patient_id}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{appointment.doctor_id}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{appointment.PatientId}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{appointment.DoctorId}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                       ${appointment.status === 'completed' ? 'bg-green-100 text-green-800' : 
@@ -71,8 +73,8 @@ const AppointmentList = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button className="text-blue-600 hover:text-blue-900 mr-3">View</button>
-                    <button className="text-gray-600 hover:text-gray-900">Edit</button>
+                    <button onClick={()=>navigate(`/view-appoinemtmentDetails/${appointment.AppointmentId}`)}className="text-blue-600 hover:text-blue-900 mr-3">View</button>
+                    <button onClick={()=>navigate(`/updateStatus/${appointment.AppointmentId}`)}className="text-gray-600 hover:text-gray-900">Edit</button>
                   </td>
                 </tr>
               ))}

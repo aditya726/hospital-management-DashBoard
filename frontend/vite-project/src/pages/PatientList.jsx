@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
-
+import {useNavigate} from "react-router-dom";
 const PatientList = () => {
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchPatients = async () => {
@@ -65,6 +66,12 @@ const PatientList = () => {
                 <p className="text-sm text-gray-500">{patient.age} years old</p>
                 <p className="text-sm text-gray-500">Patient ID: {patient.PatientId}</p> {/* Display patient ID */}
               </div>
+              <button
+              onClick={() => navigate(`/patients/${patient.PatientId}`)} // Use an arrow function
+              className="ml-auto bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors"
+              >
+              View Details
+              </button>
             </li>
           ))}
         </ul>

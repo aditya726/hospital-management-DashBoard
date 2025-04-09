@@ -182,6 +182,7 @@ class Doctor(DoctorBase):
     id: Annotated[str, Field(alias="_id", default=None)]
 
 class AppointmentBase(BaseModel):
+    AppointmentId : str
     PatientId: str
     DoctorId: str
     date: datetime
@@ -223,17 +224,14 @@ async def get_patients():
 
 @app.get("/patients/{patient_id}", response_model=Patient)
 async def get_patient(patient_id: str):
-    if not ObjectId.is_valid(patient_id):
-        raise HTTPException(status_code=400, detail="Invalid patient ID format")
-    
-    patient = await db.patients.find_one({"_id": ObjectId(patient_id)})
+    patient = await db.patients.find_one({"PatientId": patient_id})
     if patient is None:
         raise HTTPException(status_code=404, detail="Patient not found")
     
     patient["_id"] = str(patient["_id"])
     return patient
 
-@app.put("/patients/{patient_id}", response_model=Patient)
+@app.put("/patients/update/{patient_id}", response_model=Patient)
 async def update_patient(patient_id: str, patient: PatientBase):
     if not ObjectId.is_valid(patient_id):
         raise HTTPException(status_code=400, detail="Invalid patient ID format")
@@ -449,6 +447,9 @@ async def delete_doctor(doctor_id: str):
 @app.post("/appointments/", response_model=Appointment, status_code=status.HTTP_201_CREATED)
 async def create_appointment(appointment: AppointmentCreate):
     # Validate patient and doctor existence
+    exists = await db.patients.find_one({"AppointmentId": appointment.AppointmentId})
+    if exists is not None:
+        raise HTTPException(status_code=404, detail="Appointment already exists")
     patient = await db.patients.find_one({"PatientId": appointment.PatientId})
     if patient is None:
         raise HTTPException(status_code=404, detail="Patient not found")
@@ -472,25 +473,24 @@ async def get_appointments():
 
 @app.get("/appointments/{appointment_id}", response_model=Appointment)
 async def get_appointment(appointment_id: str):
-    if not ObjectId.is_valid(appointment_id):
-        raise HTTPException(status_code=400, detail="Invalid appointment ID format")
-    
-    appointment = await db.appointments.find_one({"_id": ObjectId(appointment_id)})
+    appointment = await db.appointments.find_one({"AppointmentId":appointment_id})
     if appointment is None:
         raise HTTPException(status_code=404, detail="Appointment not found")
     
     appointment["_id"] = str(appointment["_id"])
     return appointment
 
+
+
 @app.put("/appointments/{appointment_id}", response_model=Appointment)
 async def update_appointment(appointment_id: str, appointment: AppointmentBase):
-    if not ObjectId.is_valid(appointment_id):
-        raise HTTPException(status_code=400, detail="Invalid appointment ID format")
-    
+    exists = await db.appointments.find_one({"AppointmentId": appointment_id})
+    if exists is None:
+        raise HTTPException(status_code=404, detail="Appointment not found")
     appointment_dict = appointment.model_dump()
     updated_appointment = await db.appointments.find_one_and_update(
-        {"_id": ObjectId(appointment_id)},
-        {"$set": appointment_dict},
+        {"AppointmentId":appointment_id},
+        {"$set":appointment_dict},
         return_document=ReturnDocument.AFTER
     )
     
