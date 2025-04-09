@@ -9,13 +9,18 @@ from bson import ObjectId
 import os
 from dotenv import load_dotenv
 from pydantic_core import core_schema
+from passlib.context import CryptContext
+import auth
+
+#password hashing
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto") 
 
 # Load environment variables
 load_dotenv()
 
 # Initialize FastAPI
 app = FastAPI(title="Hospital Management System API")
-
+app.include_router(auth.route)
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
@@ -200,6 +205,33 @@ class AppointmentCreate(AppointmentBase):
 
 class Appointment(AppointmentBase):
     id: Annotated[str, Field(alias="_id", default=None)]
+    
+class StaffRegister(BaseModel):
+    staff_id: str
+    name: str
+    role: str
+    contact: str
+    email: str
+    password: str = Field(..., description="Hashed password")
+
+    # Custom validator to hash the password
+    @classmethod
+    def validate_password(cls, password: str) -> str:
+        return pwd_context.hash(password)
+
+    def model_dump(self, **kwargs):
+        # Ensure the password is hashed before dumping the model
+        self.password = self.validate_password(self.password)
+        return super().model_dump(**kwargs)
+
+
+class StaffLogin(BaseModel):
+    staff_id: str
+    password: str = Field(..., description="Hashed password")
+    
+#staff endpoints
+
+     
 
 # Patient endpoints
 @app.post("/patients/", response_model=Patient, status_code=status.HTTP_201_CREATED)
