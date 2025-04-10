@@ -11,6 +11,7 @@ import PatientDetails from "./pages/PatientDetails";
 import Navbar from "./components/Navbar";
 import AppointmentDetails from "./pages/AppointmentDetails";
 import UpdateStatus from "./pages/UpdateStatus";
+import MediSyncProDashboard from "./pages/dashboard";
 
 const App = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -68,7 +69,8 @@ const App = () => {
             <div className="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
               <Routes>
                 {/* Define routes for different views */}
-                <Route path="/" element={<PatientList />} />
+                {/* <Route path="/" element={<PatientList />} /> */}
+                <Route path = '/' element = {<MediSyncProDashboard/>}></Route>
                 <Route path="/patients" element={<PatientList />} />
                 <Route path="/patients/:patientId" element={<PatientDetails />} />
                 <Route path="/doctors" element={<DoctorList />} />
