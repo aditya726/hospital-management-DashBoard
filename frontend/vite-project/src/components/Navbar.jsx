@@ -31,7 +31,20 @@ const Navbar = () => {
 
       {/* Navigation Links */}
       <div className="py-4">
-        <div className="px-4 mb-3">
+        {/* Dashboard Button */}
+        <NavItem 
+          to="/" 
+          label="Dashboard"
+          isActive={isActive('/dashboard')}
+          color="cyan"
+          icon={
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+            </svg>
+          }
+        />
+
+        <div className="px-4 mb-3 mt-3">
           <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
             Main Menu
           </h3>
@@ -121,7 +134,8 @@ const NavItem = ({ to, label, isActive, icon, color = "blue" }) => {
     blue: "text-blue-600 bg-blue-50 border-blue-600",
     green: "text-green-600 bg-green-50 border-green-600",
     indigo: "text-indigo-600 bg-indigo-50 border-indigo-600",
-    purple: "text-purple-600 bg-purple-50 border-purple-600"
+    purple: "text-purple-600 bg-purple-50 border-purple-600",
+    cyan: "text-cyan-600 bg-cyan-50 border-cyan-600"
   };
   
   const activeClass = colorClasses[color];

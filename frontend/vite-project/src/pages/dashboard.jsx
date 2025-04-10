@@ -1,56 +1,173 @@
 import { useState, useEffect } from 'react';
 import { Calendar, Clock, Users, User, FileText, Activity, PieChart, Bell, Search } from 'lucide-react';
+import axios from 'axios'; // You'll need to install axios: npm install axios
+
+// API base URL
+const API_BASE_URL = 'http://localhost:8000'; // Change this if your backend is on a different URL
 
 export default function MediSyncProDashboard() {
+  // State variables
   const [appointments, setAppointments] = useState([]);
+  const [doctors, setDoctors] = useState([]);
+  const [stats, setStats] = useState([
+    { title: 'Total Patients', value: 0, icon: Users, color: 'bg-blue-500', increase: '0%' },
+    { title: 'Today\'s Appointments', value: 0, icon: Calendar, color: 'bg-purple-500', increase: '0%' },
+    { title: 'New Patients', value: 0, icon: User, color: 'bg-green-500', increase: '0%' },
+    { title: 'Total Doctors', value: 0, icon: FileText, color: 'bg-yellow-500', increase: '0%' },
+  ]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [showAppointmentDetails, setShowAppointmentDetails] = useState(false);
   const [animateStats, setAnimateStats] = useState(false);
   const [chartData, setChartData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   
-  // Sample data
-  const upcomingAppointments = [
-    { id: 1, patient: 'Sarah Johnson', doctor: 'Dr. Michael Chen', time: '10:00 AM', date: 'Today', type: 'Check-up', status: 'Confirmed', avatar: 'F' },
-    { id: 2, patient: 'Robert Garcia', doctor: 'Dr. Emily Wong', time: '11:30 AM', date: 'Today', type: 'Follow-up', status: 'Pending', avatar: 'M' },
-    { id: 3, patient: 'Maria Rodriguez', doctor: 'Dr. James Wilson', time: '2:15 PM', date: 'Today', type: 'Consultation', status: 'Confirmed', avatar: 'F' },
-    { id: 4, patient: 'David Kim', doctor: 'Dr. Sarah Johnson', time: '9:00 AM', date: 'Tomorrow', type: 'New Patient', status: 'Confirmed', avatar: 'M' },
-    { id: 5, patient: 'Jennifer Lee', doctor: 'Dr. Michael Chen', time: '3:45 PM', date: 'Tomorrow', type: 'Follow-up', status: 'Pending', avatar: 'F' },
-  ];
-  
-  const doctors = [
-    { name: 'Dr. Michael Chen', specialty: 'Cardiologist', patients: 42, appointments: 8 },
-    { name: 'Dr. Emily Wong', specialty: 'Pediatrician', patients: 65, appointments: 12 },
-    { name: 'Dr. James Wilson', specialty: 'Neurologist', patients: 38, appointments: 6 },
-    { name: 'Dr. Sarah Johnson', specialty: 'Family Medicine', patients: 78, appointments: 15 },
-  ];
-  
-  const stats = [
-    { title: 'Total Patients', value: 1248, icon: Users, color: 'bg-blue-500', increase: '+12%' },
-    { title: 'Today\'s Appointments', value: 42, icon: Calendar, color: 'bg-purple-500', increase: '+8%' },
-    { title: 'New Patients', value: 28, icon: User, color: 'bg-green-500', increase: '+23%' },
-    { title: 'Total Doctors', value: 32, icon: FileText, color: 'bg-yellow-500', increase: '+5%' },
-  ];
-
+  // Fetch dashboard data
   useEffect(() => {
-    setAppointments(upcomingAppointments);
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch dashboard stats
+        const statsResponse = await axios.get(`${API_BASE_URL}/dashboard/stats`);
+        
+        // Fetch all doctors
+        const doctorsResponse = await axios.get(`${API_BASE_URL}/doctors/`);
+        
+        // Fetch all appointments
+        const appointmentsResponse = await axios.get(`${API_BASE_URL}/appointments/`);
+        
+        // Update stats
+        const dashboardStats = statsResponse.data;
+        setStats([
+          { 
+            title: 'Total Patients', 
+            value: dashboardStats.total_patients, 
+            icon: Users, 
+            color: 'bg-blue-500', 
+            increase: '+12%' // Consider calculating this dynamically if you have historical data
+          },
+          { 
+            title: 'Today\'s Appointments', 
+            value: dashboardStats.todays_appointments.length, 
+            icon: Calendar, 
+            color: 'bg-purple-500', 
+            increase: '+8%' 
+          },
+          { 
+            title: 'New Patients', 
+            value: dashboardStats.recent_patients.length, 
+            icon: User, 
+            color: 'bg-green-500', 
+            increase: '+23%' 
+          },
+          { 
+            title: 'Total Doctors', 
+            value: dashboardStats.total_doctors, 
+            icon: FileText, 
+            color: 'bg-yellow-500', 
+            increase: '+5%' 
+          },
+        ]);
+        
+        // Format doctors data
+        const formattedDoctors = doctorsResponse.data.map(doctor => ({
+          name: doctor.name,
+          specialty: doctor.specialization,
+          patients: 0, // You might need an additional endpoint to get this count
+          appointments: 0, // You could count this from appointments data
+          id: doctor._id
+        }));
+        setDoctors(formattedDoctors);
+        
+        // Format appointments data
+        const formattedAppointments = appointmentsResponse.data.map(appointment => {
+          // Get patient and doctor details
+          const patient = dashboardStats.recent_patients.find(p => p.PatientId === appointment.PatientId) || {};
+          const doctor = doctorsResponse.data.find(d => d.DoctorId === appointment.DoctorId) || {};
+          
+          // Format date
+          const appointmentDate = new Date(appointment.date);
+          const today = new Date();
+          const isToday = 
+            appointmentDate.getDate() === today.getDate() &&
+            appointmentDate.getMonth() === today.getMonth() &&
+            appointmentDate.getFullYear() === today.getFullYear();
+          
+          const dateLabel = isToday ? 'Today' : 'Tomorrow';
+          
+          return {
+            id: appointment._id,
+            patient: patient.name || appointment.PatientId,
+            doctor: doctor.name || appointment.DoctorId,
+            time: appointmentDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            date: dateLabel,
+            type: appointment.notes || 'Appointment',
+            status: appointment.status,
+            avatar: patient.gender === 'Female' ? 'F' : 'M'
+          };
+        });
+        setAppointments(formattedAppointments);
+        
+        // Set chart data based on appointment types
+        // You would need to modify this based on your actual data
+        const appointmentTypes = {};
+        
+        // Get the last 6 months
+        const months = [];
+        const currentDate = new Date();
+        for (let i = 5; i >= 0; i--) {
+          const month = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+          months.push(month.toLocaleString('default', { month: 'short' }));
+        }
+        
+        // Create chart data structure
+        const chartDataPoints = months.map(month => ({
+          name: month,
+          consultations: 0,
+          followUps: 0,
+          checkUps: 0
+        }));
+        
+        // Count appointments by type for each month
+        appointmentsResponse.data.forEach(appointment => {
+          const appointmentDate = new Date(appointment.date);
+          const monthName = appointmentDate.toLocaleString('default', { month: 'short' });
+          const monthIndex = months.indexOf(monthName);
+          
+          if (monthIndex !== -1) {
+            // Determine type
+            const type = appointment.notes?.toLowerCase() || '';
+            
+            if (type.includes('consult')) {
+              chartDataPoints[monthIndex].consultations++;
+            } else if (type.includes('follow')) {
+              chartDataPoints[monthIndex].followUps++;
+            } else {
+              chartDataPoints[monthIndex].checkUps++;
+            }
+          }
+        });
+        
+        setChartData(chartDataPoints);
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+        setError('Failed to load dashboard data. Please try again later.');
+        setLoading(false);
+      }
+    };
+    
+    fetchDashboardData();
     
     // Trigger animation after component mounts
     setTimeout(() => {
       setAnimateStats(true);
     }, 300);
     
-    // Set sample chart data
-    setChartData([
-      { name: 'Jan', consultations: 45, followUps: 33, checkUps: 22 },
-      { name: 'Feb', consultations: 50, followUps: 38, checkUps: 29 },
-      { name: 'Mar', consultations: 35, followUps: 30, checkUps: 25 },
-      { name: 'Apr', consultations: 55, followUps: 42, checkUps: 31 },
-      { name: 'May', consultations: 60, followUps: 45, checkUps: 35 },
-      { name: 'Jun', consultations: 48, followUps: 38, checkUps: 28 }
-    ]);
   }, []);
-
+  
   const filteredAppointments = appointments.filter(app => 
     app.patient.toLowerCase().includes(searchTerm.toLowerCase()) ||
     app.doctor.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -74,11 +191,21 @@ export default function MediSyncProDashboard() {
       const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'short' });
       const dayOfMonth = date.getDate();
       
+      // Count appointments for this date
+      const appointmentsForDate = appointments.filter(app => {
+        const appDate = new Date(app.date);
+        return (
+          appDate.getDate() === date.getDate() &&
+          appDate.getMonth() === date.getMonth() &&
+          appDate.getFullYear() === date.getFullYear()
+        );
+      }).length;
+      
       dates.push({ 
         date: dayOfMonth, 
         day: dayOfWeek, 
         isToday: i === 0,
-        appointments: Math.floor(Math.random() * 8) + 2 // Random number of appointments
+        appointments: appointmentsForDate
       });
     }
     
@@ -90,7 +217,17 @@ export default function MediSyncProDashboard() {
   // Animation classes for elements
   const fadeInUp = "transition-all duration-500 transform";
 
+  // Show loading or error states
+  if (loading) {
+    return <div className="flex justify-center items-center h-screen">Loading dashboard data...</div>;
+  }
+  
+  if (error) {
+    return <div className="flex justify-center items-center h-screen text-red-500">{error}</div>;
+  }
+
   return (
+    // ... The rest of your component remains mostly the same, but now uses real data
     <div className="flex flex-col p-6 bg-gray-50">
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-800">Dashboard Overview</h2>
@@ -165,7 +302,7 @@ export default function MediSyncProDashboard() {
               <p className="text-gray-500 text-center py-4">No appointments found</p>
             ) : (
               <div className="space-y-4">
-                {filteredAppointments.map((appointment, index) => (
+                {filteredAppointments.map((appointment) => (
                   <div 
                     key={appointment.id}
                     className="flex items-center p-4 hover:bg-blue-50 rounded-lg cursor-pointer transition-colors border border-gray-100 hover:border-blue-200"
@@ -184,8 +321,10 @@ export default function MediSyncProDashboard() {
                     </div>
                     <div className="text-right">
                       <span className={`inline-block px-3 py-1 rounded-full text-xs ${
-                        appointment.status === 'Confirmed' 
+                        appointment.status === 'Confirmed' || appointment.status === 'completed'
                           ? 'bg-green-100 text-green-800' 
+                          : appointment.status === 'cancelled'
+                          ? 'bg-red-100 text-red-800'
                           : 'bg-yellow-100 text-yellow-800'
                       }`}>
                         {appointment.status}
@@ -212,10 +351,10 @@ export default function MediSyncProDashboard() {
             
             <div className="p-6">
               <div className="space-y-4">
-                {doctors.slice(0, 3).map((doctor, index) => (
-                  <div key={index} className="flex items-center p-3 hover:bg-blue-50 rounded-lg cursor-pointer transition-colors border border-gray-100 hover:border-blue-200">
+                {doctors.slice(0, 3).map((doctor) => (
+                  <div key={doctor.id} className="flex items-center p-3 hover:bg-blue-50 rounded-lg cursor-pointer transition-colors border border-gray-100 hover:border-blue-200">
                     <div className="w-10 h-10 rounded-full bg-blue-500 text-white flex items-center justify-center font-medium">
-                      {doctor.name.split(' ')[1][0]}
+                      {doctor.name.split(' ')[0][0]}
                     </div>
                     <div className="ml-4 flex-1">
                       <h4 className="font-medium">{doctor.name}</h4>
@@ -234,48 +373,12 @@ export default function MediSyncProDashboard() {
             </div>
           </div>
           
-          {/* Recent Activities */}
-          <div className={`bg-white rounded-lg shadow-sm flex-1 ${fadeInUp} ${animateStats ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ transitionDelay: '600ms' }}>
-            <div className="p-6 border-b border-gray-100">
-              <h3 className="text-lg font-semibold">Recent Activities</h3>
-            </div>
-            
-            <div className="p-6">
-              <div className="space-y-4">
-                <div className="relative pl-6 pb-6 border-l-2 border-blue-200">
-                  <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-blue-500"></div>
-                  <p className="font-medium">New patient registered</p>
-                  <p className="text-sm text-gray-500">James Wilson completed registration</p>
-                  <p className="text-xs text-gray-400 mt-1">2 hours ago</p>
-                </div>
-                
-                <div className="relative pl-6 pb-6 border-l-2 border-green-200">
-                  <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-green-500"></div>
-                  <p className="font-medium">Appointment completed</p>
-                  <p className="text-sm text-gray-500">Dr. Chen completed appointment with Sarah</p>
-                  <p className="text-xs text-gray-400 mt-1">3 hours ago</p>
-                </div>
-                
-                <div className="relative pl-6 pb-6 border-l-2 border-purple-200">
-                  <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-purple-500"></div>
-                  <p className="font-medium">Medical record updated</p>
-                  <p className="text-sm text-gray-500">Dr. Wong updated Robert's records</p>
-                  <p className="text-xs text-gray-400 mt-1">5 hours ago</p>
-                </div>
-                
-                <div className="relative pl-6 border-l-2 border-gray-200">
-                  <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-gray-500"></div>
-                  <p className="font-medium">New appointment scheduled</p>
-                  <p className="text-sm text-gray-500">Maria booked an appointment for tomorrow</p>
-                  <p className="text-xs text-gray-400 mt-1">Yesterday</p>
-                </div>
-              </div>
-            </div>
-          </div>
+          {/* Recent Activities section - you would need to create an endpoint for this or fabricate from other data */}
+          {/* ... Rest of your component ... */}
         </div>
       </div>
       
-      {/* Bottom Section */}
+      {/* Bottom Section - Chart */}
       <div className={`bg-white rounded-lg shadow-sm p-6 ${fadeInUp} ${animateStats ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ transitionDelay: '700ms' }}>
         <div className="mb-6">
           <h3 className="text-lg font-semibold">Appointment Statistics</h3>
@@ -283,7 +386,7 @@ export default function MediSyncProDashboard() {
         </div>
         
         <div className="h-64">
-          {/* This is where a chart would normally go - simplified for this example */}
+          {/* Simple chart visualization */}
           <div className="h-full flex">
             {chartData.map((data, index) => (
               <div key={index} className="flex-1 flex flex-col justify-end items-center space-y-2">
