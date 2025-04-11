@@ -36,6 +36,7 @@ class UserRegistration(BaseModel):
     username:str
     email:str
     password:str
+    confirm_password:str
     
 class Token(BaseModel):
     access_token:str
@@ -70,6 +71,8 @@ async def register_user(user: UserRegistration):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already exists")
 
     # Hash the password and save the user to the database
+    if(user.confirm_password!=user.password):
+        raise HTTPException(status_code = status.HTTP_400_BAD_REQUEST,detail="Passwords do not match")
     hashed_password = hash_password(user.password)
     user_data = {
         "username": user.username,

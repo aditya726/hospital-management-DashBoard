@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, NavLink } from "react-router-dom";
 import PatientList from "./pages/PatientList";
 import DoctorList from "./pages/DoctorList";
 import AppointmentList from "./pages/AppointmentList";
@@ -12,6 +12,9 @@ import Navbar from "./components/Navbar";
 import AppointmentDetails from "./pages/AppointmentDetails";
 import UpdateStatus from "./pages/UpdateStatus";
 import MediSyncProDashboard from "./pages/dashboard";
+import  LoginForm  from "./components/login";
+import SignupForm from "./components/signup";
+
 
 const App = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -42,15 +45,27 @@ const App = () => {
                 </h1>
               </div>
               <div className="flex items-center space-x-3">
-                <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium shadow-sm">
-                  Admin Portal
-                </button>
-                <button className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-md text-sm font-medium shadow-sm">
+              <NavLink 
+                  to="/login" 
+                  className={({ isActive }) => 
+                    isActive 
+                      ? "bg-gray-200 text-gray-800 px-4 py-2 rounded-md text-sm font-medium shadow-sm" 
+                      : "bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-md text-sm font-medium shadow-sm"
+                  }
+                >
                   Login
-                </button>
-                <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium shadow-sm">
+              </NavLink>
+
+              <NavLink 
+                  to="/signup" 
+                  className={({ isActive }) => 
+                    isActive 
+                      ? "bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium shadow-sm" 
+                      : "bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium shadow-sm"
+                  }
+                >
                   Signup
-                </button>
+            </NavLink>
               </div>
             </div>
           </div>
@@ -81,6 +96,8 @@ const App = () => {
                 <Route path="/create-appointment" element={<CreateAppointment />} />
                 <Route path="/view-appoinemtmentDetails/:appointmentId" element={<AppointmentDetails />} />
                 <Route path="/updateStatus/:appointmentId" element={<UpdateStatus />} />
+                <Route path='/login' element={<LoginForm />}/>
+                <Route path='/signup' element={<SignupForm />}/>
               </Routes>
             </div>
           </div>
