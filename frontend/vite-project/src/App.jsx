@@ -15,7 +15,7 @@ import MediSyncProDashboard from "./pages/dashboard";
 import  LoginForm  from "./components/login";
 import SignupForm from "./components/signup";
 import ProtectedRoute from "./components/ProtectedRoutes";
-
+import HealthAssistant from "./pages/AI_assistant";
 
 const App = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -97,6 +97,7 @@ const App = () => {
                 <Route path="/create-appointment" element={<ProtectedRoute><CreateAppointment /></ProtectedRoute>} />
                 <Route path="/view-appoinemtmentDetails/:appointmentId" element={<AppointmentDetails />} />
                 <Route path="/updateStatus/:appointmentId" element={<UpdateStatus />} />
+                <Route path="/ai-assistant" element={<HealthAssistant></HealthAssistant>} />
                 <Route path='/login' element={<LoginForm />}/>
                 <Route path='/signup' element={<SignupForm />}/>
               </Routes>

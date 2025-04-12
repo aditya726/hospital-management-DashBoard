@@ -293,7 +293,11 @@ export default function MediSyncProDashboard() {
         <h2 className="text-2xl font-bold text-gray-800">Dashboard Overview</h2>
         <p className="text-gray-600 mt-1">Welcome back, Admin. Here's what's happening today.</p>
       </div>
-      
+        {/* AI Assistant Button - Highly visible in top-right of dashboard */}
+        <button className="flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-medium py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all mb-3" onClick={()=>navigate("/ai-assistant")}>
+          <Activity className="h-5 w-5" />
+          <span>AI Health Assistant</span>
+        </button>
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {stats.map((stat, index) => (

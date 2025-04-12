@@ -11,7 +11,8 @@ from dotenv import load_dotenv
 from pydantic_core import core_schema
 from passlib.context import CryptContext
 import auth
-
+import AI
+from AI import ai_router
 #password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto") 
 
@@ -21,6 +22,7 @@ load_dotenv()
 # Initialize FastAPI
 app = FastAPI(title="Hospital Management System API")
 app.include_router(auth.route)
+app.include_router(AI.ai_router)
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
@@ -41,6 +43,11 @@ async def startup_db_client():
     global db
     mongo_client = AsyncIOMotorClient(uri)
     db = mongo_client.hospital_db
+    
+    # Set the db for the AI router
+    ai_router.dependency_overrides = {
+        lambda: None: lambda: db
+    }
     
     # Test connection
     try:
