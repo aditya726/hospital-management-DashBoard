@@ -1,9 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect} from 'react';
 import { Calendar, Clock, Users, User, FileText, Activity, PieChart, Bell, Search } from 'lucide-react';
 import axios from 'axios'; // You'll need to install axios: npm install axios
+import { useNavigate } from 'react-router-dom';
 
 // API base URL
 const API_BASE_URL = 'http://localhost:8000'; // Change this if your backend is on a different URL
+
+// Helper function to compare dates (only day, month, year)
+function isSameDay(date1, date2) {
+  const d1 = new Date(date1);
+  const d2 = new Date(date2);
+  return (
+    d1.getDate() === d2.getDate() &&
+    d1.getMonth() === d2.getMonth() &&
+    d1.getFullYear() === d2.getFullYear()
+  );
+}
 
 export default function MediSyncProDashboard() {
   // State variables
@@ -22,6 +34,43 @@ export default function MediSyncProDashboard() {
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(new Date()); // Track selected date
+  const [calendarDates, setCalendarDates] = useState([]); // Store calendar dates
+  const navigate = useNavigate();
+  
+  // Generate calendar dates for the upcoming appointments widget
+  const generateCalendarDates = () => {
+    const today = new Date();
+    const dates = [];
+    
+    for (let i = 0; i < 5; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+      
+      const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'short' });
+      const dayOfMonth = date.getDate();
+      
+      // Count appointments for this date
+      const appointmentsForDate = appointments.filter(app => {
+        const appDate = new Date(app.date);
+        return (
+          appDate.getDate() === date.getDate() &&
+          appDate.getMonth() === date.getMonth() &&
+          appDate.getFullYear() === date.getFullYear()
+        );
+      }).length;
+      
+      dates.push({ 
+        date: dayOfMonth, 
+        day: dayOfWeek, 
+        isToday: i === 0,
+        appointments: appointmentsForDate,
+        fullDate: new Date(date) // Store the full date for filtering
+      });
+    }
+    
+    return dates;
+  };
   
   // Fetch dashboard data
   useEffect(() => {
@@ -87,15 +136,32 @@ export default function MediSyncProDashboard() {
           const patient = dashboardStats.recent_patients.find(p => p.PatientId === appointment.PatientId) || {};
           const doctor = doctorsResponse.data.find(d => d.DoctorId === appointment.DoctorId) || {};
           
-          // Format date
+          // Store the actual appointment date
           const appointmentDate = new Date(appointment.date);
+          
+          // Format display date label
           const today = new Date();
           const isToday = 
             appointmentDate.getDate() === today.getDate() &&
             appointmentDate.getMonth() === today.getMonth() &&
             appointmentDate.getFullYear() === today.getFullYear();
           
-          const dateLabel = isToday ? 'Today' : 'Tomorrow';
+          const tomorrow = new Date(today);
+          tomorrow.setDate(today.getDate() + 1);
+          
+          const isTomorrow = 
+            appointmentDate.getDate() === tomorrow.getDate() &&
+            appointmentDate.getMonth() === tomorrow.getMonth() &&
+            appointmentDate.getFullYear() === tomorrow.getFullYear();
+          
+          let dateLabel = appointmentDate.toLocaleDateString('en-US', { 
+            weekday: 'short', 
+            month: 'short', 
+            day: 'numeric' 
+          });
+          
+          if (isToday) dateLabel = 'Today';
+          else if (isTomorrow) dateLabel = 'Tomorrow';
           
           return {
             id: appointment._id,
@@ -103,6 +169,7 @@ export default function MediSyncProDashboard() {
             doctor: doctor.name || appointment.DoctorId,
             time: appointmentDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             date: dateLabel,
+            rawDate: appointmentDate, // Store the raw date for filtering
             type: appointment.notes || 'Appointment',
             status: appointment.status,
             avatar: patient.gender === 'Female' ? 'F' : 'M'
@@ -168,51 +235,45 @@ export default function MediSyncProDashboard() {
     
   }, []);
   
-  const filteredAppointments = appointments.filter(app => 
-    app.patient.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    app.doctor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    app.type.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Update calendar dates whenever appointments change
+  useEffect(() => {
+    const dates = generateCalendarDates();
+    setCalendarDates(dates);
+  }, [appointments]);
+  
+  // Filter appointments based on the selected date and search term
+  const filteredAppointments = appointments.filter(app => {
+    // First filter by search term
+    const matchesSearch = 
+      app.patient.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      app.doctor.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      app.type.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    if (!matchesSearch) return false;
+    
+    // Then filter by selected date
+    if (selectedDate) {
+      const appDate = app.rawDate;
+      const selected = new Date(selectedDate);
+      
+      return (
+        appDate.getDate() === selected.getDate() &&
+        appDate.getMonth() === selected.getMonth() &&
+        appDate.getFullYear() === selected.getFullYear()
+      );
+    }
+    
+    return true;
+  });
   
   const handleAppointmentClick = (appointment) => {
     setSelectedAppointment(appointment);
     setShowAppointmentDetails(true);
   };
   
-  // Generate calendar dates for the upcoming appointments widget
-  const generateCalendarDates = () => {
-    const today = new Date();
-    const dates = [];
-    
-    for (let i = 0; i < 5; i++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() + i);
-      
-      const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'short' });
-      const dayOfMonth = date.getDate();
-      
-      // Count appointments for this date
-      const appointmentsForDate = appointments.filter(app => {
-        const appDate = new Date(app.date);
-        return (
-          appDate.getDate() === date.getDate() &&
-          appDate.getMonth() === date.getMonth() &&
-          appDate.getFullYear() === date.getFullYear()
-        );
-      }).length;
-      
-      dates.push({ 
-        date: dayOfMonth, 
-        day: dayOfWeek, 
-        isToday: i === 0,
-        appointments: appointmentsForDate
-      });
-    }
-    
-    return dates;
+  const handleDateSelect = (date) => {
+    setSelectedDate(date.fullDate);
   };
-  
-  const calendarDates = generateCalendarDates();
   
   // Animation classes for elements
   const fadeInUp = "transition-all duration-500 transform";
@@ -227,7 +288,6 @@ export default function MediSyncProDashboard() {
   }
 
   return (
-    // ... The rest of your component remains mostly the same, but now uses real data
     <div className="flex flex-col p-6 bg-gray-50">
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-800">Dashboard Overview</h2>
@@ -264,7 +324,13 @@ export default function MediSyncProDashboard() {
         <div className={`lg:col-span-2 bg-white rounded-lg shadow-sm ${fadeInUp} ${animateStats ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ transitionDelay: '400ms' }}>
           <div className="p-6 border-b border-gray-100">
             <div className="flex justify-between items-center">
-              <h3 className="text-lg font-semibold">Today's Appointments</h3>
+              <h3 className="text-lg font-semibold">
+                {new Date(selectedDate).toLocaleDateString('en-US', { 
+                  weekday: 'long', 
+                  month: 'short', 
+                  day: 'numeric' 
+                })} Appointments
+              </h3>
               <div className="flex space-x-2">
                 <input
                   type="text"
@@ -273,7 +339,7 @@ export default function MediSyncProDashboard() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
-                <button className="text-blue-500 text-sm font-medium hover:underline">View All</button>
+                <button className="text-blue-500 text-sm font-medium hover:underline" onClick={()=>navigate("/appointments")}>View All</button>
               </div>
             </div>
           </div>
@@ -284,14 +350,15 @@ export default function MediSyncProDashboard() {
                 <div 
                   key={index}
                   className={`flex flex-col items-center p-3 min-w-16 border rounded-lg cursor-pointer transition-colors ${
-                    date.isToday 
+                    isSameDay(date.fullDate, selectedDate)
                       ? 'bg-blue-500 text-white border-blue-500' 
                       : 'border-gray-200 hover:bg-blue-50 hover:border-blue-200'
                   }`}
+                  onClick={() => handleDateSelect(date)}
                 >
                   <span className="text-xs font-medium">{date.day}</span>
                   <span className="text-xl font-bold my-1">{date.date}</span>
-                  <span className={`text-xs ${date.isToday ? 'text-blue-100' : 'text-gray-500'}`}>
+                  <span className={`text-xs ${isSameDay(date.fullDate, selectedDate) ? 'text-blue-100' : 'text-gray-500'}`}>
                     {date.appointments} appts
                   </span>
                 </div>
@@ -299,7 +366,7 @@ export default function MediSyncProDashboard() {
             </div>
             
             {filteredAppointments.length === 0 ? (
-              <p className="text-gray-500 text-center py-4">No appointments found</p>
+              <p className="text-gray-500 text-center py-4">No appointments found for this date</p>
             ) : (
               <div className="space-y-4">
                 {filteredAppointments.map((appointment) => (
@@ -345,7 +412,7 @@ export default function MediSyncProDashboard() {
             <div className="p-6 border-b border-gray-100">
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-semibold">Active Doctors</h3>
-                <button className="text-blue-500 text-sm font-medium hover:underline">View All</button>
+                <button className="text-blue-500 text-sm font-medium hover:underline" onClick={()=>navigate("/doctors")}>View All</button>
               </div>
             </div>
             
@@ -366,7 +433,7 @@ export default function MediSyncProDashboard() {
                   </div>
                 ))}
                 
-                <button className="w-full mt-2 p-2 text-blue-500 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors text-sm font-medium">
+                <button className="w-full mt-2 p-2 text-blue-500 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors text-sm font-medium" onClick={()=>navigate("/create-doctor")}>
                   Add New Doctor
                 </button>
               </div>

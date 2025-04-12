@@ -14,6 +14,7 @@ import UpdateStatus from "./pages/UpdateStatus";
 import MediSyncProDashboard from "./pages/dashboard";
 import  LoginForm  from "./components/login";
 import SignupForm from "./components/signup";
+import ProtectedRoute from "./components/ProtectedRoutes";
 
 
 const App = () => {
@@ -85,15 +86,15 @@ const App = () => {
               <Routes>
                 {/* Define routes for different views */}
                 {/* <Route path="/" element={<PatientList />} /> */}
-                <Route path = '/' element = {<MediSyncProDashboard/>}></Route>
-                <Route path="/patients" element={<PatientList />} />
+                <Route path = '/' element = {<ProtectedRoute><MediSyncProDashboard/></ProtectedRoute>}></Route>
+                <Route path="/patients" element={<ProtectedRoute><PatientList /></ProtectedRoute>} />
                 <Route path="/patients/:patientId" element={<PatientDetails />} />
-                <Route path="/doctors" element={<DoctorList />} />
-                <Route path="/appointments" element={<AppointmentList />} />
-                <Route path="/search-patients" element={<SearchPatients />} />
-                <Route path="/create-patient" element={<CreatePatient />} />
-                <Route path="/create-doctor" element={<CreateDoctor />} />
-                <Route path="/create-appointment" element={<CreateAppointment />} />
+                <Route path="/doctors" element={<ProtectedRoute><DoctorList /></ProtectedRoute>} />
+                <Route path="/appointments" element={<ProtectedRoute><AppointmentList /></ProtectedRoute>} />
+                <Route path="/search-patients" element={<ProtectedRoute><SearchPatients /></ProtectedRoute>} />
+                <Route path="/create-patient" element={<ProtectedRoute><CreatePatient /></ProtectedRoute>} />
+                <Route path="/create-doctor" element={<ProtectedRoute><CreateDoctor /></ProtectedRoute>} />
+                <Route path="/create-appointment" element={<ProtectedRoute><CreateAppointment /></ProtectedRoute>} />
                 <Route path="/view-appoinemtmentDetails/:appointmentId" element={<AppointmentDetails />} />
                 <Route path="/updateStatus/:appointmentId" element={<UpdateStatus />} />
                 <Route path='/login' element={<LoginForm />}/>
