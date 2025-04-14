@@ -13,6 +13,8 @@ from passlib.context import CryptContext
 import auth
 import AI
 from AI import ai_router
+from pymongo.mongo_client import MongoClient
+from pymongo.server_api import ServerApi
 #password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto") 
 
@@ -32,36 +34,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# MongoDB connection
-uri = os.getenv("mongo_uri") # Replace with your local MongoDB URI if different
-
-# MongoDB database object
-db = None
-
-@app.on_event("startup")
-async def startup_db_client():
-    global db
-    mongo_client = AsyncIOMotorClient(uri)
-    db = mongo_client.hospital_db
-    
-    # Set the db for the AI router
-    ai_router.dependency_overrides = {
-        lambda: None: lambda: db
-    }
-    
-    # Test connection
-    try:
-        await mongo_client.admin.command('ping')
-        print("Pinged your deployment. You successfully connected to MongoDB!")
-    except Exception as e:
-        print(f"Failed to connect to MongoDB: {e}")
-        raise
-
-@app.on_event("shutdown")
-async def shutdown_db_client():
-    global db
-    if db is not None:
-        db.client.close()
+uri = os.getenv("mongo_uri")
+# Create a new client and connect to the server
+client = AsyncIOMotorClient(uri, server_api=ServerApi('1'))
+db = client["hospital_management"]
+# Send a ping to confirm a successful connection
+try:
+    client.admin.command('ping')
+    print("Pinged your deployment. You successfully connected to MongoDB!")
+except Exception as e:
+    print(e)
 
 # PyObjectId for MongoDB ObjectId handling - Compatible with Pydantic v2
 class PyObjectId(str):

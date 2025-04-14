@@ -23,7 +23,7 @@ ALGORITHM = os.getenv("ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES = 30  # You can adjust this value as needed
 
 # MongoDB connection
-MONGO_URI = os.getenv("MONGO_URI")
+MONGO_URI = os.getenv("mongo_uri")
 client = MongoClient(MONGO_URI)
 db = client["staff-management"]  # Replace with your database name
 users_collection = db["staff"]  # Replace with your users collection name

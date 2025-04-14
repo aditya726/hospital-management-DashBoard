@@ -33,6 +33,7 @@ const SignupForm = () => {
           username,
           email,
           password,
+          confirm_password: confirmPassword
         }),
       });
 
