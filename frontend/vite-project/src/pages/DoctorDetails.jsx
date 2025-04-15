@@ -3,9 +3,9 @@ import { useParams, useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-const PatientDetails = () => {
-  const { patientId } = useParams(); // Extract patientId from the URL
-  const [patient, setPatient] = useState(null);
+const DoctorDetails = () => {
+  const { doctorId } = useParams(); // Extract doctorId from the URL
+  const [doctor, setDoctor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [deleting, setDeleting] = useState(false);
@@ -13,14 +13,14 @@ const PatientDetails = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchPatientDetails = async () => {
+    const fetchDoctorDetails = async () => {
       try {
-        const response = await fetch(`http://localhost:8000/patients/${patientId}`);
+        const response = await fetch(`http://localhost:8000/doctors/${doctorId}`);
         if (!response.ok) {
-          throw new Error("Failed to fetch patient details");
+          throw new Error("Failed to fetch doctor details");
         }
         const data = await response.json();
-        setPatient(data);
+        setDoctor(data);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -28,8 +28,8 @@ const PatientDetails = () => {
       }
     };
 
-    fetchPatientDetails();
-  }, [patientId]);
+    fetchDoctorDetails();
+  }, [doctorId]);
 
   const openDeleteModal = () => {
     setShowDeleteModal(true);
@@ -42,20 +42,20 @@ const PatientDetails = () => {
   const handleDelete = async () => {
     setDeleting(true);
     try {
-      const response = await fetch(`http://localhost:8000/patients/${patientId}`, {
+      const response = await fetch(`http://localhost:8000/doctors/${doctorId}`, {
         method: "DELETE",
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail || "Failed to delete patient");
+        throw new Error(errorData.detail || "Failed to delete doctor");
       }
 
-      toast.success("Patient deleted successfully");
+      toast.success("Doctor deleted successfully");
       
-      // Redirect to patients list after short delay to allow toast to be seen
+      // Redirect to doctors list after short delay to allow toast to be seen
       setTimeout(() => {
-        navigate("/patients");
+        navigate("/doctors");
       }, 2000);
     } catch (err) {
       toast.error(`Error: ${err.message}`);
@@ -77,14 +77,14 @@ const PatientDetails = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-center text-gray-900 mb-2">Delete Patient</h3>
+            <h3 className="text-lg font-medium text-center text-gray-900 mb-2">Delete Doctor</h3>
             <p className="text-sm text-center text-gray-500">
-              Are you sure you want to delete this patient? This action cannot be undone.
+              Are you sure you want to delete this doctor? This action cannot be undone.
             </p>
-            {patient && (
+            {doctor && (
               <div className="mt-4 p-3 bg-gray-50 rounded-md">
-                <p className="text-sm font-medium text-gray-700">Patient: {patient.name}</p>
-                <p className="text-xs text-gray-500">ID: {patient.PatientId}</p>
+                <p className="text-sm font-medium text-gray-700">Doctor: {doctor.name}</p>
+                <p className="text-xs text-gray-500">ID: {doctor.DoctorId}</p>
               </div>
             )}
           </div>
@@ -140,26 +140,32 @@ const PatientDetails = () => {
       <DeleteConfirmationModal />
       
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">Patient Details</h2>
+        <h2 className="text-2xl font-bold text-gray-800">Doctor Details</h2>
         <button
           onClick={openDeleteModal}
           className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition duration-150 ease-in-out"
         >
-          Delete Patient
+          Delete Doctor
         </button>
       </div>
       
-      <p className="text-lg font-medium text-gray-900">Name: {patient.name}</p>
-      <p className="text-sm text-gray-500">Age: {patient.age} years old</p>
-      <p className="text-sm text-gray-500">Gender: {patient.gender}</p>
-      <p className="text-sm text-gray-500">Patient ID: {patient.PatientId}</p>
-      <p className="text-sm text-gray-500">Contact: {patient.contact}</p>
-      <p className="text-sm text-gray-500">Address: {patient.address}</p>
-      <p className="text-sm text-gray-500">Blood Type: {patient.blood_type}</p>
-      <p className="text-sm text-gray-500">Medical History: {patient.medical_history}</p>
-      <p className="text-sm text-gray-500">Admission Date: {new Date(patient.admission_date).toLocaleDateString()}</p>
+      <p className="text-lg font-medium text-gray-900">Name: {doctor.name}</p>
+      <p className="text-sm text-gray-500">Specialization: {doctor.specialization}</p>
+      <p className="text-sm text-gray-500">Doctor ID: {doctor.DoctorId}</p>
+      <p className="text-sm text-gray-500">Contact: {doctor.contact}</p>
+      <p className="text-sm text-gray-500">Email: {doctor.email}</p>
+      <p className="text-sm text-gray-500">Department: {doctor.department}</p>
+      {doctor.qualification && (
+        <p className="text-sm text-gray-500">Qualification: {doctor.qualification}</p>
+      )}
+      {doctor.experience && (
+        <p className="text-sm text-gray-500">Experience: {doctor.experience} years</p>
+      )}
+      {doctor.joining_date && (
+        <p className="text-sm text-gray-500">Joining Date: {new Date(doctor.joining_date).toLocaleDateString()}</p>
+      )}
     </div>
   );
 };
 
-export default PatientDetails;
+export default DoctorDetails;

@@ -94,29 +94,25 @@ export default function MediSyncProDashboard() {
             title: 'Total Patients', 
             value: dashboardStats.total_patients, 
             icon: Users, 
-            color: 'bg-blue-500', 
-            increase: '+12%' // Consider calculating this dynamically if you have historical data
+            color: 'bg-blue-500'
           },
           { 
             title: 'Today\'s Appointments', 
             value: dashboardStats.todays_appointments.length, 
             icon: Calendar, 
-            color: 'bg-purple-500', 
-            increase: '+8%' 
+            color: 'bg-purple-500'
           },
           { 
             title: 'New Patients', 
             value: dashboardStats.recent_patients.length, 
             icon: User, 
-            color: 'bg-green-500', 
-            increase: '+23%' 
+            color: 'bg-green-500'
           },
           { 
             title: 'Total Doctors', 
             value: dashboardStats.total_doctors, 
             icon: FileText, 
-            color: 'bg-yellow-500', 
-            increase: '+5%' 
+            color: 'bg-yellow-500'
           },
         ]);
         
@@ -312,7 +308,6 @@ export default function MediSyncProDashboard() {
               <div>
                 <p className="text-gray-500 text-sm">{stat.title}</p>
                 <h3 className="text-3xl font-bold mt-2">{stat.value}</h3>
-                <span className="text-green-500 text-sm font-medium">{stat.increase}</span>
               </div>
               <div className={`p-3 rounded-full ${stat.color} text-white`}>
                 <stat.icon size={24} />

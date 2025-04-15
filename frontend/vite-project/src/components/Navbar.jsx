@@ -9,33 +9,14 @@ const Navbar = () => {
   };
 
   return (
-    <div className="fixed left-0 top-0 h-screen w-64 bg-white shadow-lg">
-      {/* Logo */}
-      <div className="flex items-center p-4 border-b border-gray-200">
-        <div className="flex items-center">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-8 w-8 text-blue-600"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-          >
-            <path
-              fillRule="evenodd"
-              d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
-              clipRule="evenodd"
-            />
-          </svg>
-          <span className="ml-2 font-bold text-gray-700 text-lg">MSP</span>
-        </div>
-      </div>
-
+    <div className="h-full overflow-y-auto bg-white">
       {/* Navigation Links */}
       <div className="py-4">
         {/* Dashboard Button */}
         <NavItem 
           to="/" 
           label="Dashboard"
-          isActive={isActive('/dashboard')}
+          isActive={isActive('/')}
           color="cyan"
           icon={
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -143,7 +124,7 @@ const NavItem = ({ to, label, isActive, icon, color = "blue" }) => {
   return (
     <Link
       to={to}
-      className={`flex items-center py-3 px-4 ${
+      className={`flex items-center py-3 px-4 transition-colors duration-200 ${
         isActive
           ? `${activeClass} border-l-4`
           : "text-gray-600 hover:bg-gray-100 border-l-4 border-transparent"

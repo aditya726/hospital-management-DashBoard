@@ -195,30 +195,30 @@ class AppointmentCreate(AppointmentBase):
 class Appointment(AppointmentBase):
     id: Annotated[str, Field(alias="_id", default=None)]
     
-class StaffRegister(BaseModel):
-    staff_id: str
-    name: str
-    role: str
-    contact: str
-    email: str
-    password: str = Field(..., description="Hashed password")
+# class StaffRegister(BaseModel):
+#     staff_id: str
+#     name: str
+#     role: str
+#     contact: str
+#     email: str
+#     password: str = Field(..., description="Hashed password")
 
-    # Custom validator to hash the password
-    @classmethod
-    def validate_password(cls, password: str) -> str:
-        return pwd_context.hash(password)
+#     # Custom validator to hash the password
+#     @classmethod
+#     def validate_password(cls, password: str) -> str:
+#         return pwd_context.hash(password)
 
-    def model_dump(self, **kwargs):
-        # Ensure the password is hashed before dumping the model
-        self.password = self.validate_password(self.password)
-        return super().model_dump(**kwargs)
+#     def model_dump(self, **kwargs):
+#         # Ensure the password is hashed before dumping the model
+#         self.password = self.validate_password(self.password)
+#         return super().model_dump(**kwargs)
 
 
-class StaffLogin(BaseModel):
-    staff_id: str
-    password: str = Field(..., description="Hashed password")
+# class StaffLogin(BaseModel):
+#     staff_id: str
+#     password: str = Field(..., description="Hashed password")
     
-#staff endpoints
+# #staff endpoints
 
      
 
@@ -272,10 +272,11 @@ async def update_patient(patient_id: str, patient: PatientBase):
 
 @app.delete("/patients/{patient_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_patient(patient_id: str):
-    if not ObjectId.is_valid(patient_id):
-        raise HTTPException(status_code=400, detail="Invalid patient ID format")
+    check = await db.patients.find_one({"PatientId":patient_id})
+    if(check is None):
+        raise HTTPException(status_code=404,detail="Patient not found")
     
-    deleted = await db.patients.delete_one({"_id": ObjectId(patient_id)})
+    deleted = await db.patients.delete_one({"PatientId": patient_id})
     
     if deleted.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Patient not found")
@@ -424,10 +425,12 @@ async def get_doctors():
 
 @app.get("/doctors/{doctor_id}", response_model=Doctor)
 async def get_doctor(doctor_id: str):
-    if not ObjectId.is_valid(doctor_id):
-        raise HTTPException(status_code=400, detail="Invalid doctor ID format")
+    check = await db.doctors.find_one({"DoctorId": doctor_id})
+    if check is None:
+        raise HTTPException(status_code=404, detail="Doctor not found")
     
-    doctor = await db.doctors.find_one({"_id": ObjectId(doctor_id)})
+    
+    doctor = await db.doctors.find_one({"DoctorId": doctor_id})
     if doctor is None:
         raise HTTPException(status_code=404, detail="Doctor not found")
     
@@ -454,10 +457,11 @@ async def update_doctor(doctor_id: str, doctor: DoctorBase):
 
 @app.delete("/doctors/{doctor_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_doctor(doctor_id: str):
-    if not ObjectId.is_valid(doctor_id):
-        raise HTTPException(status_code=400, detail="Invalid doctor ID format")
+    check = await db.doctors.find_one({"DoctorId":doctor_id})
+    if(check is None):
+        raise HTTPException(status_code=404,detail="Doctor not found")
     
-    deleted = await db.doctors.delete_one({"_id": ObjectId(doctor_id)})
+    deleted = await db.doctors.delete_one({"DoctorId":doctor_id})
     
     if deleted.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Doctor not found")
@@ -523,10 +527,11 @@ async def update_appointment(appointment_id: str, appointment: AppointmentBase):
 
 @app.delete("/appointments/{appointment_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_appointment(appointment_id: str):
-    if not ObjectId.is_valid(appointment_id):
-        raise HTTPException(status_code=400, detail="Invalid appointment ID format")
+    check = await db.appointments.find_one({"AppointmentId":appointment_id})
+    if(check is None):
+        raise HTTPException(status_code=404,detail="Appointment not found")
     
-    deleted = await db.appointments.delete_one({"_id": ObjectId(appointment_id)})
+    deleted = await db.appointments.delete_one({"AppointmentId":appointment_id})
     
     if deleted.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Appointment not found")

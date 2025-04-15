@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const DoctorList = () => {
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchDoctors = async () => {
@@ -63,8 +65,14 @@ const DoctorList = () => {
               <div className="ml-4">
                 <p className="text-lg font-medium text-gray-900">{doctor.name}</p>
                 <p className="text-sm text-gray-500">{doctor.specialization}</p>
-                <p className="text-sm text-gray-500">Doctor ID: {doctor.DoctorId}</p> {/* Display doctor ID */}
+                <p className="text-sm text-gray-500">Doctor ID: {doctor.DoctorId}</p>
               </div>
+              <button
+                onClick={() => navigate(`/doctors/${doctor.DoctorId}`)}
+                className="ml-auto bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors"
+              >
+                View Details
+              </button>
             </li>
           ))}
         </ul>
